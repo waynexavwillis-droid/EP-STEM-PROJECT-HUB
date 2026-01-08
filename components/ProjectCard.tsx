@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Project, InteractiveProject } from '../types';
+import { InteractiveProject } from '../types';
 import { Eye, Heart, Clock, MessageSquare } from 'lucide-react';
 import { AVATAR_BG } from '../constants';
 
@@ -30,15 +30,12 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onToggleLik
       className="bg-white rounded-[2.5rem] shadow-2xl border-none overflow-hidden hover:shadow-[0_40px_80px_rgba(0,0,0,0.4)] transition-all group cursor-pointer flex flex-col h-full transform hover:-translate-y-2 relative"
       onClick={() => onClick(project.id)}
     >
-      {/* Header Image Section */}
       <div className="relative h-64 overflow-hidden bg-slate-100">
         <img 
           src={project.thumbnail} 
           alt={project.title}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
         />
-        
-        {/* Floating Badges */}
         <div className="absolute top-6 left-6 flex flex-wrap gap-2">
           <span className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${getDifficultyStyles(project.difficulty)} shadow-sm`}>
             {project.difficulty}
@@ -49,16 +46,14 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onToggleLik
         </div>
       </div>
       
-      {/* Body Content */}
       <div className="p-8 flex-grow flex flex-col">
         <h3 className="font-black text-black text-3xl mb-4 leading-none group-hover:text-[#6b1e8e] transition-colors uppercase tracking-tighter line-clamp-2">
           {project.title}
         </h3>
-        <p className="text-black text-base mb-8 line-clamp-3 leading-relaxed font-black italic opacity-100">
+        <p className="text-black text-base mb-8 line-clamp-3 leading-relaxed font-black italic">
           "{project.description}"
         </p>
         
-        {/* Author and Stats Section */}
         <div className="flex items-center justify-between pt-6 border-t border-slate-200 mt-auto">
           <div className="flex items-center space-x-3 overflow-hidden">
             <div className="w-12 h-12 rounded-2xl bg-[#6b1e8e] flex-shrink-0 flex items-center justify-center text-white shadow-lg border-2 border-white overflow-hidden">
@@ -69,7 +64,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onToggleLik
               />
             </div>
             <div className="flex flex-col min-w-0">
-               <p className="text-[9px] font-black text-black uppercase tracking-widest leading-none mb-1 opacity-60">Created By</p>
+               <p className="text-[9px] font-black text-black uppercase tracking-widest leading-none mb-1 opacity-70">Created By</p>
                <p className="text-[13px] font-black text-black uppercase tracking-tight truncate">
                  {project.author}
                </p>
@@ -78,28 +73,27 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onToggleLik
           
           <div className="flex items-center space-x-4 text-black flex-shrink-0">
             <div className="flex items-center space-x-1">
-               <Eye className="w-4 h-4 text-black" /> 
+               <Eye className="w-4 h-4" /> 
                <span className="text-[11px] font-black">{project.views}</span>
             </div>
             <div className="flex items-center space-x-1">
-               <MessageSquare className="w-4 h-4 text-black" /> 
+               <MessageSquare className="w-4 h-4" /> 
                <span className="text-[11px] font-black">{project.comments.length}</span>
             </div>
             <button 
               onClick={handleLikeClick}
               className={`flex items-center space-x-1 transition-all hover:scale-110 active:scale-90 ${project.isLikedByUser ? 'text-pink-600' : 'hover:text-pink-500'}`}
             >
-              <Heart className={`w-4 h-4 ${project.isLikedByUser ? 'fill-pink-600' : 'text-black'}`} /> 
+              <Heart className={`w-4 h-4 ${project.isLikedByUser ? 'fill-pink-600' : ''}`} /> 
               <span className="text-[11px] font-black">{project.likes}</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Footer Meta Section */}
       <div className="bg-slate-50 px-8 py-5 flex justify-between items-center text-[11px] uppercase tracking-[0.2em] font-black text-black border-t border-slate-200">
-        <span className="flex items-center">
-           <Clock className="w-4 h-4 mr-2 text-black" /> {project.duration}
+        <span className="flex items-center font-black">
+           <Clock className="w-4 h-4 mr-2" /> {project.duration}
         </span>
         <div className="bg-white px-5 py-2 rounded-xl border-2 border-slate-200 shadow-sm text-[10px] font-black text-black uppercase tracking-widest">
            {project.hardware.length} Hardware

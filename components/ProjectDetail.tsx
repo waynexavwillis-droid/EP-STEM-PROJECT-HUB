@@ -69,7 +69,10 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onToggle
     { 
       id: 'story', 
       label: 'Story',
-      subItems: project.steps.map(step => ({ id: `step-${step.title.replace(/\s+/g, '-').toLowerCase()}`, label: step.title }))
+      subItems: (project.steps || []).map(step => ({ 
+        id: `step-${(step.title || 'step').replace(/\s+/g, '-').toLowerCase()}`, 
+        label: step.title 
+      }))
     },
     { id: 'schematics', label: 'Schematics' },
     { id: 'code', label: 'Code' },
@@ -222,7 +225,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onToggle
                 <h2 className="text-4xl font-black text-black uppercase tracking-tight italic">Mission Arsenal</h2>
               </div>
               <div className="grid grid-cols-1 gap-8">
-                {project.hardware.map((item, idx) => (
+                {(project.hardware || []).map((item, idx) => (
                   <div key={idx} className="bg-slate-50 p-10 rounded-[3rem] flex items-center border-2 border-slate-100 hover:border-black transition-all group shadow-sm">
                     <div className="w-24 h-24 bg-white rounded-[2rem] flex-shrink-0 mr-10 overflow-hidden p-4 shadow-inner border-2 border-slate-200">
                        <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
@@ -241,8 +244,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onToggle
             <section id="story" className="space-y-16 pt-20 border-t-2 border-slate-100 scroll-mt-40">
               <h2 className="text-4xl font-black text-black uppercase tracking-tight italic">Protocol Details</h2>
               <div className="space-y-40">
-                {project.steps.map((step, idx) => (
-                  <div key={idx} id={`step-${step.title.replace(/\s+/g, '-').toLowerCase()}`} className="space-y-12 scroll-mt-40">
+                {(project.steps || []).map((step, idx) => (
+                  <div key={idx} id={`step-${(step.title || 'step').replace(/\s+/g, '-').toLowerCase()}`} className="space-y-12 scroll-mt-40">
                     <div className="flex items-center space-x-10">
                        <div className="w-20 h-20 bg-black text-yellow-400 flex items-center justify-center rounded-[2rem] font-black text-4xl italic shadow-2xl rotate-[-4deg] flex-shrink-0">{idx + 1}</div>
                        <h3 className="text-4xl md:text-5xl font-black text-black tracking-tight uppercase italic">{step.title}</h3>
