@@ -23,6 +23,8 @@ const LoginForm: React.FC = () => {
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError('');
+    // Debug line for testing configuration issues
+    console.log("PROJECT ID:", auth.app.options.projectId);
     try {
       await signInWithGoogle();
     } catch (err: any) {
