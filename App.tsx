@@ -10,51 +10,8 @@ import LiveSpaceBackground from './components/LiveSpaceBackground';
 import { MOCK_PROJECTS, AVATAR_BG, THEMES } from './constants';
 import { AppState, CommunityPost, User, InteractiveProject } from './types';
 import { ArrowRight, X, Cpu, ChevronDown, Rocket, Sparkles, Sprout, HeartPulse, Search, Mail, ShieldAlert, Loader2 } from 'lucide-react';
-import { db, auth, googleProvider, signInWithPopup, signInWithEmailAndPassword, signOut, onAuthStateChanged } from './services/firebase';
+import { db, auth, signInWithGoogle, signInWithEmailAndPassword, signOut, onAuthStateChanged } from './services/firebase';
 import { ref, onValue, set, push, update, remove } from "firebase/database";
-
-const AVATAR_SEEDS = Array.from({ length: 24 }, (_, i) => `Robot-${i + 1}`);
-
-const FilterDropdown: React.FC<{
-  label: string;
-  value: string;
-  options: string[];
-  onChange: (val: string) => void;
-}> = ({ label, value, options, onChange }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  return (
-    <div className="relative" ref={dropdownRef} style={{ zIndex: isOpen ? 100 : 10 }}>
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-4 px-6 py-3 border border-white/10 rounded-lg bg-[#23293a] text-[13px] font-bold text-white hover:border-yellow-400 transition-all min-w-[160px] justify-between shadow-xl"
-      >
-        <span className="truncate uppercase">{value}</span>
-        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-      {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-full min-w-[200px] bg-[#1a1f2e] border border-white/10 rounded-lg shadow-2xl py-2 overflow-hidden">
-          {options.map((opt) => (
-            <button key={opt} onClick={() => { onChange(opt); setIsOpen(false); }} className={`w-full text-left px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider hover:bg-yellow-400 hover:text-black transition-all ${value === opt ? 'text-yellow-400' : 'text-white/60'}`}>
-              {opt}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -67,11 +24,11 @@ const LoginForm: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      // signInWithPopup will trigger the onAuthStateChanged listener in the App component
-      await signInWithPopup(auth, googleProvider);
+      await signInWithGoogle();
+      // Successful login will be detected by the onAuthStateChanged listener in the App component
     } catch (err: any) {
-      console.error("Google login error:", err);
-      setError('Google Sign-In failed. Please check your connection and try again.');
+      console.error("Google login failed:", err);
+      setError('Mission Link Failed: ' + (err.message || 'Check your connection.'));
       setLoading(false);
     }
   };
@@ -84,8 +41,8 @@ const LoginForm: React.FC = () => {
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
     } catch (err: any) {
-      console.error("Email login error:", err);
-      setError('Authentication failed. Check your admin email and security code.');
+      console.error("Email login failed:", err);
+      setError('Invalid mission authorization codes.');
       setLoading(false);
     }
   };
@@ -117,7 +74,7 @@ const LoginForm: React.FC = () => {
                   disabled={loading}
                   className="w-full bg-white text-slate-900 py-6 rounded-2xl font-black text-xl uppercase shadow-2xl hover:scale-105 transition-all flex items-center justify-center space-x-4 mb-4 border-b-8 border-slate-200 active:translate-y-1 active:border-b-0"
                 >
-                  {loading ? <Loader2 className="w-8 h-8 animate-spin" /> : (
+                  {loading ? <Loader2 className="w-8 h-8 animate-spin text-slate-900" /> : (
                     <>
                       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-8 h-8" alt="Google" />
                       <span>Log in with Gmail</span>
@@ -125,13 +82,13 @@ const LoginForm: React.FC = () => {
                   )}
                 </button>
                 <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-4 leading-relaxed">
-                  First-time pilots register automatically via Gmail
+                  Gmail login is required to access the Academy missions.
                 </p>
               </div>
 
               <div className="flex items-center space-x-4 opacity-20 my-10">
                 <div className="h-px flex-grow bg-white"></div>
-                <span className="text-white font-black text-[10px] uppercase tracking-widest">Authorized Staff</span>
+                <span className="text-white font-black text-[10px] uppercase tracking-widest">OR</span>
                 <div className="h-px flex-grow bg-white"></div>
               </div>
 
@@ -187,7 +144,6 @@ const App: React.FC = () => {
   });
 
   useEffect(() => {
-    // This is the source of truth for the user's login status
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         const isAdmin = firebaseUser.email === 'Edusupport@ep-asia.com';
@@ -275,8 +231,6 @@ const App: React.FC = () => {
     return result;
   }, [state.searchQuery, state.activeCategory, state.activeDifficulty, state.activeSort, approvedProjects]);
 
-  const isFiltering = state.searchQuery.length > 0 || state.activeCategory !== 'All projects' || state.activeDifficulty !== 'All difficulties';
-
   const sections = useMemo(() => {
     const s = [];
     const sampleProjects = approvedProjects.filter(p => p.theme === 'Sample').slice(0, 4);
@@ -319,16 +273,20 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, currentView: isAdmin ? 'grid' : 'submissions' }));
   };
 
+  // Only render the app once authentication state is determined
   if (authLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-4">
         <Loader2 className="w-12 h-12 text-yellow-400 animate-spin" />
-        <p className="text-white/40 font-black uppercase tracking-[0.2em] text-xs">Synchronizing Mission Data...</p>
+        <p className="text-white/40 font-black uppercase tracking-[0.2em] text-xs">Synchronizing with Academy Hub...</p>
       </div>
     );
   }
 
-  if (!user) return <LoginForm />;
+  // If no user is signed in, strictly show the login form
+  if (!user) {
+    return <LoginForm />;
+  }
 
   return (
     <Layout 
@@ -352,47 +310,33 @@ const App: React.FC = () => {
             </div>
           </section>
 
-          <div className="container mx-auto px-6 space-y-16 mb-20">
-            <div className="flex flex-wrap items-center gap-4 p-5 bg-[#1a1f2e] border border-white/5 rounded-xl relative shadow-2xl" style={{ zIndex: 100 }}>
-              <FilterDropdown label="Sort" value={state.activeSort} options={['Trending', 'Newest', 'Most Liked']} onChange={val => setState(prev => ({ ...prev, activeSort: val }))} />
-              <FilterDropdown label="Difficulty" value={state.activeDifficulty} options={['All difficulties', 'Beginner', 'Intermediate', 'Advanced']} onChange={val => setState(prev => ({ ...prev, activeDifficulty: val }))} />
-              <FilterDropdown label="Category" value={state.activeCategory} options={['All projects', 'IoT', 'Robotics', 'AI', 'Electronics', '3D Printing']} onChange={val => setState(prev => ({ ...prev, activeCategory: val }))} />
-            </div>
-
-            {isFiltering ? (
-              <div className="space-y-10">
-                <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                   <h2 className="text-xl font-bold text-white tracking-tight">Mission Results</h2>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {filteredProjects.map(p => (
-                    <ProjectCard key={p.id} project={p} onClick={id => setState(prev => ({...prev, currentView: 'detail', selectedProjectId: id}))} onToggleLike={handleToggleLike} />
-                  ))}
-                  {filteredProjects.length === 0 && (
-                    <div className="col-span-full py-20 text-center bg-white/5 rounded-3xl border border-dashed border-white/10">
-                       <p className="text-white/40 font-black uppercase tracking-widest">No matching missions found.</p>
-                    </div>
-                  )}
-                </div>
+          <div className="container mx-auto px-6 space-y-20">
+            {state.searchQuery ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {filteredProjects.map(p => (
+                  <ProjectCard key={p.id} project={p} onClick={id => setState(prev => ({...prev, currentView: 'detail', selectedProjectId: id}))} onToggleLike={handleToggleLike} />
+                ))}
+                {filteredProjects.length === 0 && (
+                  <div className="col-span-full py-20 text-center bg-white/5 rounded-3xl border border-dashed border-white/10">
+                    <p className="text-white/40 font-black uppercase tracking-widest">No matching missions found.</p>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="space-y-20">
-                {sections.map((section, idx) => (
-                  section.items.length > 0 && (
-                    <div key={idx} className="space-y-6">
-                      <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                        <h2 className="text-xl font-bold text-white tracking-tight">{section.title}</h2>
-                        <button className="text-[11px] font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">View all</button>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {section.items.map(p => (
-                          <ProjectCard key={p.id} project={p} onClick={id => setState(prev => ({...prev, currentView: 'detail', selectedProjectId: id}))} onToggleLike={handleToggleLike} />
-                        ))}
-                      </div>
+              sections.map((section, idx) => (
+                section.items.length > 0 && (
+                  <div key={idx} className="space-y-6">
+                    <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                      <h2 className="text-xl font-bold text-white tracking-tight uppercase italic tracking-widest">{section.title}</h2>
                     </div>
-                  )
-                ))}
-              </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                      {section.items.map(p => (
+                        <ProjectCard key={p.id} project={p} onClick={id => setState(prev => ({...prev, currentView: 'detail', selectedProjectId: id}))} onToggleLike={handleToggleLike} />
+                      ))}
+                    </div>
+                  </div>
+                )
+              ))
             )}
           </div>
         </div>

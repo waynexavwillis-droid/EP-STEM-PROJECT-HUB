@@ -29,7 +29,23 @@ const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
 export const storage = getStorage(app);
 export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+
+/**
+ * Helper function for Google Sign-In using the exact logic requested.
+ */
+export async function signInWithGoogle() {
+  try {
+    const provider = new GoogleAuthProvider();
+    // Use the provider and auth instance to trigger the popup
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    console.log("Logged in user:", user);
+    return user;
+  } catch (error) {
+    console.error("Google login error:", error);
+    throw error;
+  }
+}
 
 /**
  * Uploads a file to Firebase Storage and returns the download URL.
@@ -41,7 +57,6 @@ export const uploadFile = async (file: File | Blob, path: string): Promise<strin
 };
 
 export { 
-  signInWithPopup, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   signOut, 
