@@ -9,7 +9,7 @@ import SubmissionQueue from './components/SubmissionQueue';
 import LiveSpaceBackground from './components/LiveSpaceBackground';
 import { MOCK_PROJECTS, AVATAR_BG, THEMES } from './constants';
 import { AppState, CommunityPost, User, InteractiveProject } from './types';
-import { ArrowRight, X, Cpu, ChevronDown, Rocket, Sparkles, Sprout, HeartPulse, Search, Mail, ShieldAlert } from 'lucide-react';
+import { ArrowRight, X, Cpu, ChevronDown, Rocket, Sparkles, Sprout, HeartPulse, Search, Mail, ShieldAlert, Loader2 } from 'lucide-react';
 import { db, auth, googleProvider, signInWithPopup, signInWithEmailAndPassword, signOut, onAuthStateChanged } from './services/firebase';
 import { ref, onValue, set, push, update, remove } from "firebase/database";
 
@@ -56,36 +56,22 @@ const FilterDropdown: React.FC<{
   );
 };
 
-const LoginForm: React.FC<{ onLogin: (user: User) => void }> = ({ onLogin }) => {
+const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
 
-  const getAvatarUrl = (seed: string) => `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&backgroundColor=${AVATAR_BG}`;
-
-  const processUser = (firebaseUser: any) => {
-    const isAdmin = firebaseUser.email === 'Edusupport@ep-asia.com';
-    const finalAvatarUrl = firebaseUser.photoURL || getAvatarUrl(firebaseUser.uid);
-    
-    onLogin({ 
-      username: firebaseUser.displayName || firebaseUser.email.split('@')[0], 
-      role: isAdmin ? 'admin' : 'user', 
-      avatarSeed: finalAvatarUrl 
-    });
-  };
-
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError('');
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      processUser(result.user);
+      // signInWithPopup will trigger the onAuthStateChanged listener in the App component
+      await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
-      console.error(err);
-      setError('Google Mission Link failed. Please check connection.');
-    } finally {
+      console.error("Google login error:", err);
+      setError('Google Sign-In failed. Please check your connection and try again.');
       setLoading(false);
     }
   };
@@ -96,12 +82,10 @@ const LoginForm: React.FC<{ onLogin: (user: User) => void }> = ({ onLogin }) => 
     setError('');
 
     try {
-      const result = await signInWithEmailAndPassword(auth, email.trim(), password);
-      processUser(result.user);
+      await signInWithEmailAndPassword(auth, email.trim(), password);
     } catch (err: any) {
-      console.error(err);
-      setError('Authentication failed. Check your security code.');
-    } finally {
+      console.error("Email login error:", err);
+      setError('Authentication failed. Check your admin email and security code.');
       setLoading(false);
     }
   };
@@ -109,7 +93,7 @@ const LoginForm: React.FC<{ onLogin: (user: User) => void }> = ({ onLogin }) => 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden px-4 bg-slate-950">
       <div className="absolute inset-0 z-0"><LiveSpaceBackground /></div>
-      <div className="bg-white/10 backdrop-blur-3xl p-8 md:p-16 rounded-[4rem] border border-white/20 shadow-[0_100px_200px_rgba(0,0,0,0.8)] w-full max-w-xl relative z-10">
+      <div className="bg-white/10 backdrop-blur-3xl p-8 md:p-16 rounded-[4rem] border border-white/20 shadow-[0_100px_200px_rgba(0,0,0,0.8)] w-full max-w-xl relative z-10 transition-all duration-500">
         <div className="text-center mb-12">
           <div className="flex flex-col items-center mb-8">
             <div className="flex items-baseline space-x-1">
@@ -133,11 +117,15 @@ const LoginForm: React.FC<{ onLogin: (user: User) => void }> = ({ onLogin }) => 
                   disabled={loading}
                   className="w-full bg-white text-slate-900 py-6 rounded-2xl font-black text-xl uppercase shadow-2xl hover:scale-105 transition-all flex items-center justify-center space-x-4 mb-4 border-b-8 border-slate-200 active:translate-y-1 active:border-b-0"
                 >
-                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-8 h-8" alt="Google" />
-                  <span>Log in with Gmail</span>
+                  {loading ? <Loader2 className="w-8 h-8 animate-spin" /> : (
+                    <>
+                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-8 h-8" alt="Google" />
+                      <span>Log in with Gmail</span>
+                    </>
+                  )}
                 </button>
                 <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-4 leading-relaxed">
-                  Pilots can sign up automatically via Gmail.
+                  First-time pilots register automatically via Gmail
                 </p>
               </div>
 
@@ -171,7 +159,7 @@ const LoginForm: React.FC<{ onLogin: (user: User) => void }> = ({ onLogin }) => 
                 {error && <div className="bg-red-500/10 border border-red-500/50 p-4 rounded-xl text-red-400 font-black text-[10px] uppercase text-center">{error}</div>}
                 
                 <button type="submit" disabled={loading} className="w-full bg-yellow-400 text-slate-900 py-6 rounded-2xl font-black text-xl uppercase shadow-2xl hover:scale-105 transition-all flex items-center justify-center border-b-8 border-yellow-600 active:translate-y-1 active:border-b-0">
-                  {loading ? <div className="w-6 h-6 border-4 border-slate-900/30 border-t-slate-900 rounded-full animate-spin" /> : <>AUTHORIZE MISSION <ArrowRight className="w-6 h-6 ml-3" /></>}
+                  {loading ? <Loader2 className="w-6 h-6 animate-spin text-slate-900" /> : <>AUTHORIZE MISSION <ArrowRight className="w-6 h-6 ml-3" /></>}
                 </button>
               </form>
             </div>
@@ -184,6 +172,7 @@ const LoginForm: React.FC<{ onLogin: (user: User) => void }> = ({ onLogin }) => 
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [projects, setProjects] = useState<InteractiveProject[]>([]);
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
   const [likedProjectIds, setLikedProjectIds] = useState<Set<string>>(new Set());
@@ -198,6 +187,7 @@ const App: React.FC = () => {
   });
 
   useEffect(() => {
+    // This is the source of truth for the user's login status
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         const isAdmin = firebaseUser.email === 'Edusupport@ep-asia.com';
@@ -209,7 +199,9 @@ const App: React.FC = () => {
       } else {
         setUser(null);
       }
+      setAuthLoading(false);
     });
+
     return () => unsubscribeAuth();
   }, []);
 
@@ -287,14 +279,11 @@ const App: React.FC = () => {
 
   const sections = useMemo(() => {
     const s = [];
-    // 1. SAMPLE ROW (Name is strictly Sample)
     const sampleProjects = approvedProjects.filter(p => p.theme === 'Sample').slice(0, 4);
     if (sampleProjects.length > 0) {
       s.push({ title: "Sample", items: sampleProjects });
     }
-    // 2. RECENT ROW
     s.push({ title: "Most recently added", items: [...approvedProjects].sort((a,b) => b.publishedAt.localeCompare(a.publishedAt)).slice(0, 4) });
-    // 3. THEME ROWS
     THEMES.filter(t => t !== 'Sample').forEach(themeName => {
       const themeProjects = approvedProjects.filter(p => p.theme === themeName).slice(0, 4);
       if (themeProjects.length > 0) {
@@ -330,7 +319,16 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, currentView: isAdmin ? 'grid' : 'submissions' }));
   };
 
-  if (!user) return <LoginForm onLogin={setUser} />;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="w-12 h-12 text-yellow-400 animate-spin" />
+        <p className="text-white/40 font-black uppercase tracking-[0.2em] text-xs">Synchronizing Mission Data...</p>
+      </div>
+    );
+  }
+
+  if (!user) return <LoginForm />;
 
   return (
     <Layout 
