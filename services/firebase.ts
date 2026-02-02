@@ -31,18 +31,28 @@ export const storage = getStorage(app);
 export const auth = getAuth(app);
 
 /**
- * Helper function for Google Sign-In using the exact logic requested.
+ * Requested Google Sign-In logic using the provided Client ID.
  */
 export async function signInWithGoogle() {
   try {
     const provider = new GoogleAuthProvider();
-    // Use the provider and auth instance to trigger the popup
+    
+    // Explicitly providing the client ID can help in some misconfigured environments
+    // though Firebase usually manages this via the Console settings.
+    provider.setCustomParameters({
+      'client_id': '541165944985-04hs525ev9fqsm1dup05j6o905oc9qqd.apps.googleusercontent.com'
+    });
+
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
     console.log("Logged in user:", user);
     return user;
-  } catch (error) {
+
+  } catch (error: any) {
     console.error("Google login error:", error);
+    if (error.code === 'auth/configuration-not-found') {
+      console.error("CRITICAL: Google Sign-In is not enabled in the Firebase Console.");
+    }
     throw error;
   }
 }

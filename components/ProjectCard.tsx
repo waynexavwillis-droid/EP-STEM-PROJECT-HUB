@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { InteractiveProject } from '../types';
-import { Eye, Heart, Clock, MessageSquare, ThumbsUp, Bookmark } from 'lucide-react';
-import { AVATAR_BG } from '../constants';
+import { Eye, Clock, ThumbsUp, Bookmark } from 'lucide-react';
 
 interface ProjectCardProps {
   project: InteractiveProject;
@@ -18,51 +17,47 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onToggleLik
 
   return (
     <div 
-      className="bg-[#1a1f2e] rounded-xl shadow-2xl border border-white/5 overflow-hidden transition-all group cursor-pointer flex flex-col h-full transform hover:-translate-y-2"
+      className="bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all group cursor-pointer flex flex-col h-full"
       onClick={() => onClick(project.id)}
     >
-      <div className="relative h-48 overflow-hidden bg-slate-900">
+      <div className="relative h-52 overflow-hidden">
         <img 
           src={project.thumbnail} 
           alt={project.title}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2000ms]"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        <div className="absolute top-4 left-4">
-           <span className="bg-yellow-400 text-black px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-lg">
+        <div className="absolute bottom-4 left-4">
+           <span className="bg-slate-900/80 backdrop-blur text-white px-3 py-1 rounded text-[9px] font-black uppercase tracking-widest">
              {project.category}
            </span>
         </div>
       </div>
       
       <div className="p-6 flex-grow flex flex-col">
-        <h3 className="font-bold text-white text-xl mb-3 leading-tight group-hover:text-yellow-400 transition-colors line-clamp-2">
+        <h3 className="font-bold text-slate-900 text-lg mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
           {project.title}
         </h3>
         
-        <div className="flex items-center space-x-2 mb-6">
-           <span className="text-[11px] font-medium text-slate-400 truncate">
-             {project.author}
-           </span>
-        </div>
+        <p className="text-slate-500 text-xs font-medium mb-6">by <span className="text-slate-900 font-bold">{project.author}</span></p>
         
-        <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-auto">
+        <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-auto">
           <div className="flex items-center space-x-4 text-slate-400">
             <button 
               onClick={handleLikeClick}
-              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 transition-all ${project.isLikedByUser ? 'bg-blue-600/20 text-blue-400 border-blue-500/50' : ''}`}
+              className={`flex items-center space-x-1.5 transition-colors ${project.isLikedByUser ? 'text-blue-600' : 'hover:text-slate-900'}`}
             >
-               <ThumbsUp className="w-4 h-4" /> 
-               <span className="text-[11px] font-bold">{project.likes}</span>
+               <ThumbsUp className={`w-4 h-4 ${project.isLikedByUser ? 'fill-current' : ''}`} /> 
+               <span className="text-xs font-bold">{project.likes}</span>
             </button>
             <div className="flex items-center space-x-1.5">
                <Eye className="w-4 h-4" /> 
-               <span className="text-[11px] font-bold">{project.views}</span>
+               <span className="text-xs font-bold">{project.views}</span>
             </div>
           </div>
-          
-          <button className="p-2 text-slate-400 hover:text-white transition-colors border border-white/10 rounded-lg">
-             <Bookmark className="w-4 h-4" />
-          </button>
+          <div className="flex items-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+             <Clock className="w-3 h-3 mr-1" />
+             {project.duration}
+          </div>
         </div>
       </div>
     </div>

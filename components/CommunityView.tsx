@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Plus, X, Sparkles, ChevronDown, 
@@ -115,7 +114,9 @@ const CommunityView: React.FC<CommunityViewProps> = ({ posts, onAddPost, onDelet
                       checkContentModeration(newPost.description) || 
                       checkContentModeration(newPost.imageUrl);
 
-    onAddPost({ ...newPost, id: editingPostId || undefined, author: user.username, isFlagged });
+    // Fix: Add missing 'status' property to satisfy the Omit<CommunityPost, ...> requirements of onAddPost.
+    const status = user.role === 'admin' ? 'approved' : 'pending';
+    onAddPost({ ...newPost, id: editingPostId || undefined, author: user.username, isFlagged, status });
     setNewPost({ title: '', description: '', imageUrl: '', category: 'IoT' });
     setEditingPostId(null);
     setIsModalOpen(false);
