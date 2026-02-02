@@ -5,115 +5,15 @@ import ProjectCard from './components/ProjectCard';
 import ProjectDetail from './components/ProjectDetail';
 import ProjectEditor from './components/ProjectEditor';
 import CommunityView from './components/CommunityView';
+import SubmissionQueue from './components/SubmissionQueue';
 import LiveSpaceBackground from './components/LiveSpaceBackground';
-import { MOCK_PROJECTS, AVATAR_BG } from './constants';
+import { MOCK_PROJECTS, AVATAR_BG, THEMES } from './constants';
 import { AppState, CommunityPost, User, InteractiveProject } from './types';
-import { ArrowRight, X, Cpu, ChevronDown } from 'lucide-react';
-import { db } from './services/firebase';
+import { ArrowRight, X, Cpu, ChevronDown, Rocket, Sparkles, Sprout, HeartPulse, Search, Mail, ShieldAlert } from 'lucide-react';
+import { db, auth, googleProvider, signInWithPopup, signInWithEmailAndPassword, signOut, onAuthStateChanged } from './services/firebase';
 import { ref, onValue, set, push, update, remove } from "firebase/database";
 
 const AVATAR_SEEDS = Array.from({ length: 24 }, (_, i) => `Robot-${i + 1}`);
-
-const LoginForm: React.FC<{ onLogin: (user: User) => void }> = ({ onLogin }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_SEEDS[0]);
-  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const getAvatarUrl = (seed: string) => `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&backgroundColor=${AVATAR_BG}`;
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    setTimeout(() => {
-      const trimmedUser = username.trim();
-      const finalAvatarUrl = getAvatarUrl(selectedAvatar);
-      
-      if (trimmedUser === 'EPSUPPORT1234' && password === 'EP1234@$#') {
-        onLogin({ username: 'EPSUPPORT1234', role: 'admin', avatarSeed: finalAvatarUrl });
-      } else if (password === 'EP1234@') {
-        onLogin({ username: trimmedUser || 'Cadet', role: 'user', avatarSeed: finalAvatarUrl });
-      } else {
-        setError('Invalid Security Code. Contact Instructor.');
-      }
-      setLoading(false);
-    }, 800);
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden px-4 bg-slate-950">
-      <div className="absolute inset-0 z-0">
-        <LiveSpaceBackground />
-      </div>
-      
-      <div className="bg-white/10 backdrop-blur-3xl p-10 md:p-16 rounded-[4rem] border border-white/20 shadow-[0_100px_200px_rgba(0,0,0,0.8)] w-full max-w-xl relative z-10">
-        <div className="text-center mb-10">
-          <div className="flex flex-col items-center mb-8">
-            <div className="flex items-baseline space-x-1">
-               <span className="text-[#f43f5e] font-black text-5xl italic drop-shadow-lg">S</span>
-               <span className="text-[#fbbf24] font-black text-5xl italic drop-shadow-lg">T</span>
-               <span className="text-[#10b981] font-black text-5xl italic drop-shadow-lg">E</span>
-               <span className="text-[#0ea5e9] font-black text-5xl italic drop-shadow-lg">M</span>
-            </div>
-            <div className="bg-[#0ea5e9] px-4 py-1.5 mt-2 rounded-lg">
-               <span className="text-white text-[10px] font-black tracking-[0.4em] uppercase">MISSION CONTROL</span>
-            </div>
-          </div>
-          <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">Enter the Hub</h2>
-        </div>
-
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div className="flex flex-col items-center mb-8">
-            <button type="button" onClick={() => setIsAvatarModalOpen(true)} className="relative group focus:outline-none">
-              <div className="w-28 h-28 rounded-[2rem] bg-white/10 border-4 border-white/20 overflow-hidden transition-all group-hover:scale-110 shadow-2xl">
-                <img src={getAvatarUrl(selectedAvatar)} alt="Avatar" className="w-full h-full object-cover" />
-              </div>
-              <div className="absolute -bottom-2 -right-2 bg-yellow-400 text-blue-900 p-2 rounded-xl shadow-lg border-2 border-white"><Cpu className="w-5 h-5" /></div>
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] ml-2">Call Sign</label>
-            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full bg-white/5 border-2 border-white/10 rounded-2xl py-5 px-8 text-white text-xl font-bold focus:border-yellow-400 outline-none" placeholder="Username" required />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] ml-2">Security Key</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-white/5 border-2 border-white/10 rounded-2xl py-5 px-8 text-white text-xl font-bold focus:border-yellow-400 outline-none" placeholder="••••••••" required />
-          </div>
-
-          {error && <div className="bg-red-500/10 border border-red-500/50 p-4 rounded-xl text-red-400 font-black text-xs uppercase text-center">{error}</div>}
-
-          <button type="submit" disabled={loading} className="w-full bg-yellow-400 text-slate-900 py-6 rounded-2xl font-black text-lg uppercase shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center">
-            {loading ? <div className="w-6 h-6 border-4 border-slate-900/30 border-t-slate-900 rounded-full animate-spin" /> : <>JOIN MISSION <ArrowRight className="w-6 h-6 ml-3" /></>}
-          </button>
-        </form>
-      </div>
-
-      {isAvatarModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-2xl">
-          <div className="bg-white/10 border border-white/20 w-full max-w-2xl rounded-[4rem] p-10 shadow-2xl">
-            <div className="flex items-center justify-between mb-10">
-              <h3 className="text-3xl font-black text-white uppercase italic">CHOOSE YOUR ROBOT</h3>
-              <button onClick={() => setIsAvatarModalOpen(false)} className="p-4 bg-white/5 rounded-2xl text-white hover:bg-red-500"><X className="w-6 h-6" /></button>
-            </div>
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-4 max-h-[50vh] overflow-y-auto no-scrollbar">
-              {AVATAR_SEEDS.map((seed) => (
-                <button key={seed} onClick={() => { setSelectedAvatar(seed); setIsAvatarModalOpen(false); }} className={`rounded-2xl border-4 transition-all ${selectedAvatar === seed ? 'bg-yellow-400 border-white' : 'bg-white/5 border-transparent'}`}>
-                  <img src={getAvatarUrl(seed)} className="w-full aspect-square" alt={seed} />
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 const FilterDropdown: React.FC<{
   label: string;
@@ -135,18 +35,18 @@ const FilterDropdown: React.FC<{
   }, []);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={dropdownRef} style={{ zIndex: isOpen ? 100 : 10 }}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-4 px-6 py-3 border-2 border-white/10 rounded-xl bg-white/5 backdrop-blur-md text-[13px] font-black text-white hover:border-yellow-400 transition-all min-w-[180px] justify-between shadow-xl"
+        className="flex items-center space-x-4 px-6 py-3 border border-white/10 rounded-lg bg-[#23293a] text-[13px] font-bold text-white hover:border-yellow-400 transition-all min-w-[160px] justify-between shadow-xl"
       >
         <span className="truncate uppercase">{value}</span>
         <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {isOpen && (
-        <div className="absolute top-full left-0 mt-3 w-full min-w-[200px] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl z-[100] py-3 overflow-hidden">
+        <div className="absolute top-full left-0 mt-2 w-full min-w-[200px] bg-[#1a1f2e] border border-white/10 rounded-lg shadow-2xl py-2 overflow-hidden">
           {options.map((opt) => (
-            <button key={opt} onClick={() => { onChange(opt); setIsOpen(false); }} className={`w-full text-left px-6 py-3 text-[11px] font-black uppercase tracking-widest hover:bg-yellow-400 hover:text-black transition-all ${value === opt ? 'text-yellow-400' : 'text-white/60'}`}>
+            <button key={opt} onClick={() => { onChange(opt); setIsOpen(false); }} className={`w-full text-left px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider hover:bg-yellow-400 hover:text-black transition-all ${value === opt ? 'text-yellow-400' : 'text-white/60'}`}>
               {opt}
             </button>
           ))}
@@ -156,10 +56,137 @@ const FilterDropdown: React.FC<{
   );
 };
 
+const LoginForm: React.FC<{ onLogin: (user: User) => void }> = ({ onLogin }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+
+  const getAvatarUrl = (seed: string) => `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&backgroundColor=${AVATAR_BG}`;
+
+  const processUser = (firebaseUser: any) => {
+    const isAdmin = firebaseUser.email === 'Edusupport@ep-asia.com';
+    const finalAvatarUrl = firebaseUser.photoURL || getAvatarUrl(firebaseUser.uid);
+    
+    onLogin({ 
+      username: firebaseUser.displayName || firebaseUser.email.split('@')[0], 
+      role: isAdmin ? 'admin' : 'user', 
+      avatarSeed: finalAvatarUrl 
+    });
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      processUser(result.user);
+    } catch (err: any) {
+      console.error(err);
+      setError('Google Mission Link failed. Please check connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+      processUser(result.user);
+    } catch (err: any) {
+      console.error(err);
+      setError('Authentication failed. Check your security code.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden px-4 bg-slate-950">
+      <div className="absolute inset-0 z-0"><LiveSpaceBackground /></div>
+      <div className="bg-white/10 backdrop-blur-3xl p-8 md:p-16 rounded-[4rem] border border-white/20 shadow-[0_100px_200px_rgba(0,0,0,0.8)] w-full max-w-xl relative z-10">
+        <div className="text-center mb-12">
+          <div className="flex flex-col items-center mb-8">
+            <div className="flex items-baseline space-x-1">
+               <span className="text-[#f43f5e] font-black text-5xl italic drop-shadow-lg">S</span>
+               <span className="text-[#fbbf24] font-black text-5xl italic drop-shadow-lg">T</span>
+               <span className="text-[#10b981] font-black text-5xl italic drop-shadow-lg">E</span>
+               <span className="text-[#0ea5e9] font-black text-5xl italic drop-shadow-lg">M</span>
+            </div>
+            <div className="bg-[#0ea5e9] px-4 py-1.5 mt-2 rounded-lg"><span className="text-white text-[10px] font-black tracking-[0.4em] uppercase">MISSION CONTROL</span></div>
+          </div>
+          <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">Launch Sequence</h2>
+        </div>
+
+        <div className="space-y-6">
+          {!showAdminLogin ? (
+            <>
+              <div className="text-center mb-6">
+                <p className="text-white/60 text-sm font-bold uppercase tracking-widest mb-4">Academy Students & Guests</p>
+                <button 
+                  onClick={handleGoogleLogin}
+                  disabled={loading}
+                  className="w-full bg-white text-slate-900 py-6 rounded-2xl font-black text-xl uppercase shadow-2xl hover:scale-105 transition-all flex items-center justify-center space-x-4 mb-4 border-b-8 border-slate-200 active:translate-y-1 active:border-b-0"
+                >
+                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-8 h-8" alt="Google" />
+                  <span>Log in with Gmail</span>
+                </button>
+                <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-4 leading-relaxed">
+                  Pilots can sign up automatically via Gmail.
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-4 opacity-20 my-10">
+                <div className="h-px flex-grow bg-white"></div>
+                <span className="text-white font-black text-[10px] uppercase tracking-widest">Authorized Staff</span>
+                <div className="h-px flex-grow bg-white"></div>
+              </div>
+
+              <button 
+                onClick={() => setShowAdminLogin(true)}
+                className="w-full bg-white/5 border-2 border-white/10 text-white/40 py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all flex items-center justify-center space-x-2"
+              >
+                <ShieldAlert className="w-4 h-4" />
+                <span>Admin Login Path</span>
+              </button>
+            </>
+          ) : (
+            <div className="animate-in slide-in-from-right-4 duration-300">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-white font-black uppercase italic tracking-widest">Admin Terminal</h3>
+                <button onClick={() => setShowAdminLogin(false)} className="text-yellow-400 text-xs font-black uppercase hover:underline">Student Entry</button>
+              </div>
+              <form onSubmit={handleEmailLogin} className="space-y-4">
+                <div className="relative">
+                  <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-white/5 border-2 border-white/10 rounded-2xl py-5 pl-16 pr-8 text-white text-lg font-bold focus:border-yellow-400 outline-none transition-all" placeholder="Admin Email" required />
+                </div>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-white/5 border-2 border-white/10 rounded-2xl py-5 px-8 text-white text-lg font-bold focus:border-yellow-400 outline-none transition-all" placeholder="Security Code" required />
+                
+                {error && <div className="bg-red-500/10 border border-red-500/50 p-4 rounded-xl text-red-400 font-black text-[10px] uppercase text-center">{error}</div>}
+                
+                <button type="submit" disabled={loading} className="w-full bg-yellow-400 text-slate-900 py-6 rounded-2xl font-black text-xl uppercase shadow-2xl hover:scale-105 transition-all flex items-center justify-center border-b-8 border-yellow-600 active:translate-y-1 active:border-b-0">
+                  {loading ? <div className="w-6 h-6 border-4 border-slate-900/30 border-t-slate-900 rounded-full animate-spin" /> : <>AUTHORIZE MISSION <ArrowRight className="w-6 h-6 ml-3" /></>}
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [projects, setProjects] = useState<InteractiveProject[]>([]);
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
+  const [likedProjectIds, setLikedProjectIds] = useState<Set<string>>(new Set());
   const [state, setState] = useState<AppState>({
     currentView: 'grid',
     selectedProjectId: null,
@@ -169,6 +196,22 @@ const App: React.FC = () => {
     activeSort: 'Trending',
     user: null,
   });
+
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        const isAdmin = firebaseUser.email === 'Edusupport@ep-asia.com';
+        setUser({
+          username: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Cadet',
+          role: isAdmin ? 'admin' : 'user',
+          avatarSeed: firebaseUser.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${firebaseUser.uid}&backgroundColor=${AVATAR_BG}`
+        });
+      } else {
+        setUser(null);
+      }
+    });
+    return () => unsubscribeAuth();
+  }, []);
 
   useEffect(() => {
     const projectsRef = ref(db, 'projects');
@@ -184,7 +227,7 @@ const App: React.FC = () => {
         }));
         setProjects(projectList);
       } else {
-        setProjects(MOCK_PROJECTS as InteractiveProject[]);
+        setProjects(MOCK_PROJECTS.map(p => ({ ...p, status: 'approved' })) as InteractiveProject[]);
       }
     });
     return () => unsubscribe();
@@ -202,13 +245,31 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
+  const projectsWithLikes = useMemo(() => {
+    return projects.map(p => ({
+      ...p,
+      isLikedByUser: likedProjectIds.has(p.id)
+    }));
+  }, [projects, likedProjectIds]);
+
+  const approvedProjects = useMemo(() => projectsWithLikes.filter(p => p.status === 'approved'), [projectsWithLikes]);
+  
+  const pendingProjects = useMemo(() => {
+    if (user?.role === 'admin') return projectsWithLikes.filter(p => p.status === 'pending');
+    return projectsWithLikes.filter(p => p.status === 'pending' && p.author === user?.username);
+  }, [projectsWithLikes, user]);
+
+  const pendingPosts = useMemo(() => {
+    if (user?.role === 'admin') return communityPosts.filter(p => p.status === 'pending');
+    return communityPosts.filter(p => p.status === 'pending' && p.author === user?.username);
+  }, [communityPosts, user]);
+
   const filteredProjects = useMemo(() => {
-    let result = projects.filter(p => {
+    let result = approvedProjects.filter(p => {
       const title = p.title || '';
       const description = p.description || '';
       const query = state.searchQuery || '';
-      
-      const matchesSearch = title.toLowerCase().includes(query.toLowerCase()) ||
+      const matchesSearch = title.toLowerCase().includes(query.toLowerCase()) || 
                             description.toLowerCase().includes(query.toLowerCase());
       const matchesCategory = state.activeCategory === 'All projects' || p.category === state.activeCategory;
       const matchesDifficulty = state.activeDifficulty === 'All difficulties' || p.difficulty === state.activeDifficulty;
@@ -220,40 +281,53 @@ const App: React.FC = () => {
     else if (state.activeSort === 'Newest') result = [...result].sort((a, b) => new Date(b.publishedAt || '').getTime() - new Date(a.publishedAt || '').getTime());
 
     return result;
-  }, [state.searchQuery, state.activeCategory, state.activeDifficulty, state.activeSort, projects]);
+  }, [state.searchQuery, state.activeCategory, state.activeDifficulty, state.activeSort, approvedProjects]);
 
-  const handleProjectClick = (id: string) => {
-    const currentProject = projects.find(p => p.id === id);
-    if (currentProject) update(ref(db, `projects/${id}`), { views: (currentProject.views || 0) + 1 });
-    setState(prev => ({ ...prev, currentView: 'detail', selectedProjectId: id }));
-  };
+  const isFiltering = state.searchQuery.length > 0 || state.activeCategory !== 'All projects' || state.activeDifficulty !== 'All difficulties';
 
-  const handleToggleLike = (id: string) => {
-    const currentProject = projects.find(p => p.id === id);
-    if (currentProject) {
-      const liked = currentProject.isLikedByUser || false;
-      update(ref(db, `projects/${id}`), { likes: liked ? Math.max(0, (currentProject.likes || 0) - 1) : (currentProject.likes || 0) + 1 });
-      setProjects(prev => prev.map(p => p.id === id ? { ...p, isLikedByUser: !liked } : p));
+  const sections = useMemo(() => {
+    const s = [];
+    // 1. SAMPLE ROW (Name is strictly Sample)
+    const sampleProjects = approvedProjects.filter(p => p.theme === 'Sample').slice(0, 4);
+    if (sampleProjects.length > 0) {
+      s.push({ title: "Sample", items: sampleProjects });
     }
+    // 2. RECENT ROW
+    s.push({ title: "Most recently added", items: [...approvedProjects].sort((a,b) => b.publishedAt.localeCompare(a.publishedAt)).slice(0, 4) });
+    // 3. THEME ROWS
+    THEMES.filter(t => t !== 'Sample').forEach(themeName => {
+      const themeProjects = approvedProjects.filter(p => p.theme === themeName).slice(0, 4);
+      if (themeProjects.length > 0) {
+        s.push({ title: themeName === 'General' ? "Academy Highlights" : themeName, items: themeProjects });
+      }
+    });
+    return s;
+  }, [approvedProjects]);
+
+  const handleToggleLike = async (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+    const isLiked = likedProjectIds.has(projectId);
+    const newLikes = isLiked ? Math.max(0, (project.likes || 0) - 1) : (project.likes || 0) + 1;
+    await update(ref(db, `projects/${projectId}`), { likes: newLikes });
+    setLikedProjectIds(prev => {
+      const next = new Set(prev);
+      if (isLiked) next.delete(projectId);
+      else next.add(projectId);
+      return next;
+    });
   };
 
-  const handleDeleteProject = async (id: string) => {
-    await remove(ref(db, `projects/${id}`));
-    setState(prev => ({ ...prev, currentView: 'grid', selectedProjectId: null }));
-  };
-
-  const handleAddCommunityPost = async (post: any) => {
-    if (post.id) {
-      await update(ref(db, `communityPosts/${post.id}`), post);
-    } else {
-      const newRef = push(ref(db, 'communityPosts'));
-      await set(newRef, { ...post, id: newRef.key, likes: 0, commentsCount: 0, timestamp: new Date().toLocaleDateString(), authorAvatar: user?.avatarSeed });
-    }
-  };
-
-  const handleVotePost = async (id: string, dir: number) => {
-    const post = communityPosts.find(p => p.id === id);
-    if (post) await update(ref(db, `communityPosts/${id}`), { likes: (post.likes || 0) + dir });
+  const handleSaveProject = async (p: any) => {
+    const isAdmin = user?.role === 'admin';
+    const projectData = { 
+      ...p, 
+      author: user?.username, 
+      status: isAdmin ? 'approved' : 'pending',
+      theme: isAdmin ? 'Sample' : p.theme 
+    };
+    await set(ref(db, `projects/${p.id}`), projectData);
+    setState(prev => ({ ...prev, currentView: isAdmin ? 'grid' : 'submissions' }));
   };
 
   if (!user) return <LoginForm onLogin={setUser} />;
@@ -264,43 +338,90 @@ const App: React.FC = () => {
       onHome={() => setState(prev => ({ ...prev, currentView: 'grid', selectedProjectId: null }))}
       onCreate={() => setState(prev => ({ ...prev, currentView: 'create' }))}
       onCommunity={() => setState(prev => ({ ...prev, currentView: 'community' }))}
-      onChallenges={() => setState(prev => ({ ...prev, currentView: 'challenges' }))}
-      onLogout={() => setUser(null)}
+      onSubmissions={() => setState(prev => ({ ...prev, currentView: 'submissions' }))}
+      onLogout={() => signOut(auth)}
       activeView={state.currentView}
       user={user}
     >
       {state.currentView === 'grid' && (
-        <div className="pb-40 animate-in fade-in slide-in-from-bottom-5 duration-700">
+        <div className="pb-40 animate-in fade-in duration-700">
           <section className="py-24 px-4 text-center">
-            <h1 className="text-6xl md:text-9xl font-black mb-12 text-white uppercase tracking-tighter drop-shadow-2xl italic">EP STEM ACADEMY</h1>
-            <div className="relative max-w-2xl mx-auto">
-               <input type="text" placeholder="Search mission modules..." className="w-full bg-white rounded-full py-6 px-12 text-black text-2xl font-black outline-none shadow-2xl" onChange={e => setState(prev => ({ ...prev, searchQuery: e.target.value }))} />
+            <h1 className="text-6xl md:text-9xl font-black mb-12 text-white uppercase tracking-tighter italic drop-shadow-2xl">EP STEM ACADEMY</h1>
+            <div className="relative max-w-2xl mx-auto flex items-center bg-white rounded-full px-8 py-2 shadow-2xl">
+               <Search className="text-slate-400 w-6 h-6 mr-4" />
+               <input type="text" placeholder="Search mission modules..." className="w-full py-4 text-black text-2xl font-black outline-none bg-transparent" value={state.searchQuery} onChange={e => setState(prev => ({ ...prev, searchQuery: e.target.value }))} />
+               {state.searchQuery && <button onClick={() => setState(prev => ({ ...prev, searchQuery: '' }))} className="p-2 text-slate-400 hover:text-black"><X /></button>}
             </div>
           </section>
 
-          <div className="container mx-auto px-4 mt-10">
-            <div className="bg-slate-900/40 backdrop-blur-3xl rounded-[4rem] p-12 border border-white/10">
-              <div className="flex flex-wrap items-center gap-5 mb-12">
-                <FilterDropdown label="Trending" value={state.activeSort} options={['Trending', 'Newest', 'Most Liked']} onChange={val => setState(prev => ({ ...prev, activeSort: val }))} />
-                <FilterDropdown label="Difficulty" value={state.activeDifficulty} options={['All difficulties', 'Beginner', 'Intermediate', 'Advanced']} onChange={val => setState(prev => ({ ...prev, activeDifficulty: val }))} />
-                <FilterDropdown label="Category" value={state.activeCategory} options={['All projects', 'IoT', 'Robotics', 'AI', 'Electronics', '3D Printing']} onChange={val => setState(prev => ({ ...prev, activeCategory: val }))} />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12">
-                {filteredProjects.map(p => <ProjectCard key={p.id} project={p} onClick={handleProjectClick} onToggleLike={handleToggleLike} />)}
-              </div>
+          <div className="container mx-auto px-6 space-y-16 mb-20">
+            <div className="flex flex-wrap items-center gap-4 p-5 bg-[#1a1f2e] border border-white/5 rounded-xl relative shadow-2xl" style={{ zIndex: 100 }}>
+              <FilterDropdown label="Sort" value={state.activeSort} options={['Trending', 'Newest', 'Most Liked']} onChange={val => setState(prev => ({ ...prev, activeSort: val }))} />
+              <FilterDropdown label="Difficulty" value={state.activeDifficulty} options={['All difficulties', 'Beginner', 'Intermediate', 'Advanced']} onChange={val => setState(prev => ({ ...prev, activeDifficulty: val }))} />
+              <FilterDropdown label="Category" value={state.activeCategory} options={['All projects', 'IoT', 'Robotics', 'AI', 'Electronics', '3D Printing']} onChange={val => setState(prev => ({ ...prev, activeCategory: val }))} />
             </div>
+
+            {isFiltering ? (
+              <div className="space-y-10">
+                <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                   <h2 className="text-xl font-bold text-white tracking-tight">Mission Results</h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {filteredProjects.map(p => (
+                    <ProjectCard key={p.id} project={p} onClick={id => setState(prev => ({...prev, currentView: 'detail', selectedProjectId: id}))} onToggleLike={handleToggleLike} />
+                  ))}
+                  {filteredProjects.length === 0 && (
+                    <div className="col-span-full py-20 text-center bg-white/5 rounded-3xl border border-dashed border-white/10">
+                       <p className="text-white/40 font-black uppercase tracking-widest">No matching missions found.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-20">
+                {sections.map((section, idx) => (
+                  section.items.length > 0 && (
+                    <div key={idx} className="space-y-6">
+                      <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                        <h2 className="text-xl font-bold text-white tracking-tight">{section.title}</h2>
+                        <button className="text-[11px] font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest">View all</button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {section.items.map(p => (
+                          <ProjectCard key={p.id} project={p} onClick={id => setState(prev => ({...prev, currentView: 'detail', selectedProjectId: id}))} onToggleLike={handleToggleLike} />
+                        ))}
+                      </div>
+                    </div>
+                  )
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {state.currentView === 'community' && <CommunityView posts={communityPosts} onAddPost={handleAddCommunityPost} onDeletePost={id => remove(ref(db, `communityPosts/${id}`))} onVote={handleVotePost} onBack={() => setState(prev => ({ ...prev, currentView: 'grid' }))} user={user} />}
-
-      {state.currentView === 'detail' && state.selectedProjectId && (
-        <ProjectDetail project={projects.find(p => p.id === state.selectedProjectId)!} onBack={() => setState(prev => ({ ...prev, currentView: 'grid' }))} onToggleLike={() => handleToggleLike(state.selectedProjectId!)} onAddComment={(c) => push(ref(db, `projects/${state.selectedProjectId}/comments`), c)} user={user} onDelete={() => handleDeleteProject(state.selectedProjectId!)} />
+      {state.currentView === 'submissions' && (
+        <SubmissionQueue 
+          pendingProjects={pendingProjects} 
+          pendingPosts={pendingPosts} 
+          onApproveProject={id => update(ref(db, `projects/${id}`), { status: 'approved' })} 
+          onRejectProject={id => remove(ref(db, `projects/${id}`))}
+          onApprovePost={id => update(ref(db, `communityPosts/${id}`), { status: 'approved' })} 
+          onRejectPost={id => remove(ref(db, `communityPosts/${id}`))}
+          user={user} 
+        />
       )}
+
+      {state.currentView === 'community' && <CommunityView posts={communityPosts.filter(p => p.status === 'approved' || (user && p.author === user.username))} onAddPost={async (post) => {
+        const isStudent = user?.role === 'user';
+        const newRef = post.id ? ref(db, `communityPosts/${post.id}`) : push(ref(db, 'communityPosts'));
+        const postData = { ...post, id: post.id || newRef.key, status: isStudent ? 'pending' : 'approved', timestamp: new Date().toLocaleDateString(), author: user?.username, authorAvatar: user?.avatarSeed, likes: post.likes || 0, commentsCount: post.commentsCount || 0 };
+        await update(newRef, postData);
+      }} onDeletePost={id => remove(ref(db, `communityPosts/${id}`))} onVote={(id, dir) => update(ref(db, `communityPosts/${id}`), { likes: (communityPosts.find(p=>p.id===id)?.likes||0) + dir })} onBack={() => setState(prev => ({ ...prev, currentView: 'grid' }))} user={user} />}
       
-      {state.currentView === 'create' && <ProjectEditor onSave={async (p) => { await set(ref(db, `projects/${p.id}`), p); setState(prev => ({ ...prev, currentView: 'grid' })); }} onCancel={() => setState(prev => ({ ...prev, currentView: 'grid' }))} />}
+      {state.currentView === 'create' && <ProjectEditor user={user} onSave={handleSaveProject} onCancel={() => setState(prev => ({ ...prev, currentView: 'grid' }))} />}
+      
+      {state.currentView === 'detail' && state.selectedProjectId && <ProjectDetail project={projectsWithLikes.find(p => p.id === state.selectedProjectId)!} onBack={() => setState(prev => ({ ...prev, currentView: 'grid' }))} onToggleLike={() => handleToggleLike(state.selectedProjectId!)} onAddComment={(c) => push(ref(db, `projects/${state.selectedProjectId}/comments`), c)} user={user} onDelete={() => remove(ref(db, `projects/${state.selectedProjectId}`))} onEdit={() => setState(prev => ({ ...prev, currentView: 'create' }))} />}
     </Layout>
   );
 };

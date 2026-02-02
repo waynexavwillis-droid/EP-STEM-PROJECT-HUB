@@ -20,6 +20,7 @@ export interface LessonStep {
   title: string;
   content: string;
   image?: string;
+  youtubeUrl?: string;
   media?: {
     url: string;
     type: 'image' | 'video';
@@ -43,6 +44,7 @@ export interface Project {
   author: string;
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   category: 'IoT' | 'Robotics' | 'AI' | 'Electronics' | '3D Printing';
+  theme: 'Health & food science' | 'Sustainable Living' | 'Future of Transportation' | 'Aesthetics (Visual and Wearable)' | 'Emerging Technologies' | 'Entrepreneurship' | 'City and Urban Landscape' | 'Language (Media and Communication)' | 'General' | 'Sample';
   thumbnail: string;
   views: number;
   likes: number;
@@ -53,6 +55,8 @@ export interface Project {
   comments: Comment[];
   publishedAt: string;
   makecodeUrl?: string;
+  status: 'approved' | 'pending';
+  isFlagged?: boolean;
 }
 
 export interface InteractiveProject extends Project {
@@ -69,10 +73,12 @@ export interface CommunityPost {
   likes: number;
   commentsCount: number;
   authorAvatar?: string;
-  category: string; // Added category for discussion filtering
+  category: string;
+  status: 'approved' | 'pending';
+  isFlagged?: boolean;
 }
 
-export type ViewState = 'grid' | 'detail' | 'create' | 'community' | 'challenges';
+export type ViewState = 'grid' | 'detail' | 'create' | 'community' | 'submissions';
 
 export interface AppState {
   currentView: ViewState;

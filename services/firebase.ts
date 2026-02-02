@@ -2,6 +2,16 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, push, onValue, update } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { 
+  getAuth, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  signOut, 
+  onAuthStateChanged,
+  User as FirebaseUser
+} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBU7dBLWNCaTQQdxl0vCKNFRkS8sDC2o6I",
@@ -18,6 +28,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
 export const storage = getStorage(app);
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
 
 /**
  * Uploads a file to Firebase Storage and returns the download URL.
@@ -28,20 +40,11 @@ export const uploadFile = async (file: File | Blob, path: string): Promise<strin
   return getDownloadURL(fileRef);
 };
 
-/**
- * Base64 string to Blob helper for convenience
- */
-export const base64ToBlob = (base64: string, contentType = ''): Blob => {
-  const byteCharacters = atob(base64.split(',')[1]);
-  const byteArrays = [];
-  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-    const slice = byteCharacters.slice(offset, offset + 512);
-    const byteNumbers = new Array(slice.length);
-    for (let i = 0; i < slice.length; i++) {
-      byteNumbers[i] = slice.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    byteArrays.push(byteArray);
-  }
-  return new Blob(byteArrays, { type: contentType });
+export { 
+  signInWithPopup, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  signOut, 
+  onAuthStateChanged 
 };
+export type { FirebaseUser };
