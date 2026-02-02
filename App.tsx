@@ -111,7 +111,6 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [projects, setProjects] = useState<InteractiveProject[]>([]);
-  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
   const [likedProjectIds, setLikedProjectIds] = useState<Set<string>>(new Set());
   const [state, setState] = useState<AppState>({
     currentView: 'grid',
@@ -178,7 +177,7 @@ const App: React.FC = () => {
   const sections = useMemo(() => {
     const s = [];
     const recent = [...approvedProjects].sort((a,b) => b.publishedAt.localeCompare(a.publishedAt)).slice(0, 4);
-    if (recent.length > 0) s.push({ title: "Featured Mission Modules", items: recent });
+    if (recent.length > 0) s.push({ title: "Featured Modules", items: recent });
     
     THEMES.forEach(theme => {
       const items = approvedProjects.filter(p => p.theme === theme).slice(0, 4);
@@ -221,42 +220,86 @@ const App: React.FC = () => {
       user={user}
     >
       {state.currentView === 'grid' && (
-        <div className="bg-[#f8f9fa] min-h-screen pb-40">
-          <div className="bg-slate-950 text-white py-24 px-6 text-center relative overflow-hidden">
-            <div className="absolute inset-0 opacity-20"><LiveSpaceBackground /></div>
-            <div className="relative z-10">
-              <h1 className="text-5xl md:text-7xl font-black mb-6 italic tracking-tight uppercase">Discover Projects</h1>
-              <p className="text-white/60 mb-10 max-w-xl mx-auto font-medium">Explore over 100+ hardware missions designed for the next generation of engineers.</p>
-              <div className="max-w-3xl mx-auto relative group">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-yellow-400 transition-colors" />
-                <input 
-                  type="text" 
-                  value={state.searchQuery}
-                  onChange={e => setState(prev => ({ ...prev, searchQuery: e.target.value }))}
-                  placeholder="What are you building today?" 
-                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl py-6 pl-16 pr-8 text-xl text-white outline-none focus:bg-white focus:text-slate-950 transition-all shadow-2xl"
-                />
+        <div className="bg-[#fcfcfc] min-h-screen pb-40 overflow-hidden relative">
+          {/* Playful Background Elements mimicking Image 2 */}
+          <div className="absolute top-20 left-10 w-64 h-64 bg-[#e2e2ff] rounded-full blur-[80px] opacity-40 pointer-events-none" />
+          <div className="absolute top-[40%] right-[-5%] w-96 h-96 bg-[#bae6fd] rounded-full blur-[100px] opacity-30 pointer-events-none" />
+          <div className="absolute bottom-20 left-[20%] w-72 h-72 bg-[#fecdd3] rounded-full blur-[90px] opacity-20 pointer-events-none" />
+
+          {/* Hero Section: Light & Playful */}
+          <div className="bg-white text-slate-900 py-24 px-6 text-center relative z-10">
+            <div className="max-w-4xl mx-auto">
+              <div className="inline-flex items-center space-x-3 mb-6 bg-[#e2e2ff] text-blue-700 px-6 py-2 rounded-full font-black text-[11px] uppercase tracking-widest shadow-sm">
+                <Sparkles className="w-4 h-4" />
+                <span>Next-Gen Engineering</span>
+              </div>
+              <h1 className="text-6xl md:text-8xl font-black mb-8 italic tracking-tighter uppercase leading-[0.9]">
+                Discover <span className="text-blue-600">Projects</span>
+              </h1>
+              <p className="text-slate-500 mb-12 max-w-2xl mx-auto font-bold text-xl leading-snug">
+                Explore 100+ hardware missions and playful ideas, <br className="hidden md:block"/> all in one place for young explorers.
+              </p>
+              
+              <div className="max-w-2xl mx-auto relative">
+                <div className="bg-white border-[4px] border-slate-900 rounded-[2.5rem] p-3 flex items-center shadow-[0_12px_0_rgba(0,0,0,1)] transition-transform hover:translate-y-1">
+                  <Search className="ml-6 text-slate-400 w-6 h-6" />
+                  <input 
+                    type="text" 
+                    value={state.searchQuery}
+                    onChange={e => setState(prev => ({ ...prev, searchQuery: e.target.value }))}
+                    placeholder="Search for... (e.g. Robot, IoT, Solar)" 
+                    className="w-full bg-transparent py-4 px-6 text-xl font-bold text-slate-900 outline-none placeholder:text-slate-300"
+                  />
+                  <button className="bg-slate-900 text-white px-10 py-4 rounded-[2rem] font-black uppercase text-sm mr-2 hover:bg-blue-600 transition-colors">
+                    Search
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="container mx-auto px-6 py-12 space-y-20">
+          {/* Content Area */}
+          <div className="container mx-auto px-6 py-12 space-y-32 relative z-10">
             {state.searchQuery ? (
-               <div className="space-y-8">
-                <h2 className="text-2xl font-black text-slate-900 border-b pb-4">Search Results</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                  {filteredProjects.map(p => <ProjectCard key={p.id} project={p} onClick={id => setState(prev => ({...prev, currentView: 'detail', selectedProjectId: id}))} onToggleLike={handleToggleLike} />)}
+               <div className="space-y-12">
+                <div className="flex items-center space-x-4 border-b-4 border-slate-900 pb-6">
+                  <h2 className="text-4xl font-black text-slate-900 italic uppercase">Search Results</h2>
+                  <div className="h-2 w-2 rounded-full bg-blue-600" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
+                  {filteredProjects.map((p, idx) => (
+                    <ProjectCard 
+                      key={p.id} 
+                      project={p} 
+                      index={idx}
+                      onClick={id => setState(prev => ({...prev, currentView: 'detail', selectedProjectId: id}))} 
+                      onToggleLike={handleToggleLike} 
+                    />
+                  ))}
                 </div>
                </div>
             ) : (
-              sections.map((section, idx) => (
-                <div key={idx} className="space-y-8">
+              sections.map((section, sectionIdx) => (
+                <div key={sectionIdx} className="space-y-12">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{section.title}</h2>
-                    <button className="text-sm font-bold text-blue-600 hover:underline">View All</button>
+                    <div className="flex items-center space-x-4">
+                      <h2 className="text-4xl font-black text-slate-900 uppercase italic leading-none">{section.title}</h2>
+                      <div className={`w-3 h-3 rounded-full ${sectionIdx % 2 === 0 ? 'bg-blue-600' : 'bg-rose-500'}`} />
+                    </div>
+                    <button className="text-sm font-black text-slate-900 uppercase tracking-widest border-b-2 border-slate-900 hover:text-blue-600 hover:border-blue-600 transition-all">
+                      View All
+                    </button>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {section.items.map(p => <ProjectCard key={p.id} project={p} onClick={id => setState(prev => ({...prev, currentView: 'detail', selectedProjectId: id}))} onToggleLike={handleToggleLike} />)}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+                    {section.items.map((p, idx) => (
+                      <ProjectCard 
+                        key={p.id} 
+                        project={p} 
+                        index={idx}
+                        onClick={id => setState(prev => ({...prev, currentView: 'detail', selectedProjectId: id}))} 
+                        onToggleLike={handleToggleLike} 
+                      />
+                    ))}
                   </div>
                 </div>
               ))
