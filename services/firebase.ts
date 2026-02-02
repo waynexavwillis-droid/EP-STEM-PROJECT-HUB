@@ -14,14 +14,14 @@ import {
 } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBU7dBLWNCaTQQdxl0vCKNFRkS8sDC2o6I",
-  authDomain: "ep-stem-academy.firebaseapp.com",
-  databaseURL: "https://ep-stem-academy-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ep-stem-academy",
-  storageBucket: "ep-stem-academy.firebasestorage.app",
-  messagingSenderId: "974275103816",
-  appId: "1:974275103816:web:05308b9b1c62bec6f45c7d",
-  measurementId: "G-W04WTBE5KP"
+  apiKey: "AIzaSyDTICA0uRLSx32hbK_siaYTKFjpDtIeXoQ",
+  authDomain: "ep-stem-project-hub.firebaseapp.com",
+  databaseURL: "https://ep-stem-project-hub-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ep-stem-project-hub",
+  storageBucket: "ep-stem-project-hub.firebasestorage.app",
+  messagingSenderId: "375883144136",
+  appId: "1:375883144136:web:74feb8f5e5a774506e3efd",
+  measurementId: "G-Y4HNWHR7E8"
 };
 
 // Initialize Firebase
